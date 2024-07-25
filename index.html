@@ -1,0 +1,148 @@
+app.get('/', (req, res) => {
+    const html = `
+    <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Conversation</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        #chatbox { height: 400px; border: 1px solid #ccc; overflow-y: scroll; padding: 10px; margin-bottom: 10px; }
+        #userInput { width: 100%; padding: 5px; margin-bottom: 10px; }
+        #sendButton, #generateMarkdownButton, #createProjectButton { padding: 5px 10px; margin-right: 10px; }
+        .message { margin-bottom: 10px; padding: 5px; border-radius: 5px; }
+        .user-message { background-color: #e6f3ff; }
+        .ai-message { background-color: #f0f0f0; }
+        .system-message { background-color: #fff0e6; }
+        .error-message { background-color: #ffe6e6; }
+        .message-content { white-space: pre-wrap; margin-left: 10px; }
+        .message-sender { font-weight: bold; }
+        #markdownOutput { 
+            margin-top: 20px; 
+            padding: 10px; 
+            border: 1px solid #ccc; 
+            white-space: pre-wrap; 
+            background-color: #f8f8f8; 
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Project Conversation</h1>
+    <div id="chatbox"></div>
+    <input type="text" id="userInput" placeholder="Type your message here...">
+    <button id="sendButton">Send</button>
+    <button id="generateMarkdownButton">Generate Markdown</button>
+    <button id="createProjectButton">Create Project</button>
+    <div id="markdownOutput"></div>
+
+    <script>
+        const chatbox = document.getElementById('chatbox');
+        const userInput = document.getElementById('userInput');
+        const sendButton = document.getElementById('sendButton');
+        const generateMarkdownButton = document.getElementById('generateMarkdownButton');
+        const createProjectButton = document.getElementById('createProjectButton');
+        const markdownOutput = document.getElementById('markdownOutput');
+
+        sendButton.addEventListener('click', sendMessage);
+        generateMarkdownButton.addEventListener('click', generateMarkdown);
+        createProjectButton.addEventListener('click', createProject);
+        userInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        async function sendMessage() {
+            const message = userInput.value.trim();
+            if (message) {
+                appendMessage('You', message, 'user-message');
+                try {
+                    const response = await fetch('/converse', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ message: message }),
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    appendMessage('AI', data.response, 'ai-message');
+                    if (data.isComplete) {
+                        appendMessage('AI', 'Conversation complete. You can now generate the Markdown or create the project.', 'ai-message');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    appendMessage('Error', error.message, 'error-message');
+                }
+
+                userInput.value = '';
+            }
+        }
+
+        function appendMessage(sender, message, className) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${className}`;
+            
+            const senderSpan = document.createElement('span');
+            senderSpan.className = 'message-sender';
+            senderSpan.textContent = sender + ': ';
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.textContent = message;
+            
+            messageDiv.appendChild(senderSpan);
+            messageDiv.appendChild(contentDiv);
+            
+            chatbox.appendChild(messageDiv);
+            chatbox.scrollTop = chatbox.scrollHeight;
+        }
+
+        async function generateMarkdown() {
+            try {
+                const response = await fetch('/generate-markdown', {
+                    method: 'POST',
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                markdownOutput.textContent = data.markdown;
+                appendMessage('System', 'Markdown file generated. You can now use this to create the application.', 'system-message');
+            } catch (error) {
+                console.error('Error:', error);
+                appendMessage('Error', 'Failed to generate Markdown: ' + error.message, 'error-message');
+            }
+        }
+
+        async function createProject() {
+            try {
+                const response = await fetch('/create-project', {
+                    method: 'POST',
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                appendMessage('System', data.message, 'system-message');
+                appendMessage('System', 'Project created: ' + JSON.stringify(data.project), 'system-message');
+            } catch (error) {
+                console.error('Error:', error);
+                appendMessage('Error', error.message, 'error-message');
+            }
+        }
+    </script>
+</body>
+</html>
+    `;
+    res.send(html);
+  });

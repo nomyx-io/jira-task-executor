@@ -1,0 +1,26 @@
+{
+  "name": "ai-tasker",
+  "version": "1.0.0",
+  "description": "LLM-Assisted JIRA Project Manager",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "jira",
+    "project management",
+    "ai",
+    "llm"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.7.2",
+    "body-parser": "^1.20.2",
+    "dotenv": "^10.0.0",
+    "express": "^4.19.2",
+    "jira-client": "^6.23.0",
+    "openai": "^4.0.0"
+  }
+}
